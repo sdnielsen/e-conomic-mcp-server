@@ -252,6 +252,16 @@ const main = async () => {
       envHint:
         "Requires ECONOMIC_APP_SECRET_TOKEN and ECONOMIC_AGREEMENT_GRANT_TOKEN",
     },
+    {
+      name: "list_account_entries",
+      input: {
+        accountNumber: 5820,
+        fromDate: "2022-01-01",
+        toDate: "2022-12-31",
+      },
+      envHint:
+        "Requires ECONOMIC_APP_SECRET_TOKEN and ECONOMIC_AGREEMENT_GRANT_TOKEN",
+    },
   ];
 
   for (const sample of samples) {

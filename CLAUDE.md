@@ -30,6 +30,8 @@ npm test
 npm run test:harness
 ```
 
+`npm test` runs the unit tests (`test/*.test.js`, Node's built-in test runner) followed by the test harness. Run only the unit tests with `npm run test:unit`.
+
 The test harness (`scripts/test-harness.js`) invokes all registered tools with sample data to verify functionality. It supports placeholder replacement (`$lastDraft`, `$lastBooked`) to chain dependent operations.
 
 ## Architecture
@@ -68,6 +70,7 @@ Tools should catch `EconomicApiError` and return error details in MCP format. Us
 - **Draft invoices**: `list_invoice_drafts`, `get_invoice_draft`, `create_invoice_draft`, `update_invoice_draft`, `book_invoice_draft`
 - **Booked invoices**: `list_booked_invoices`, `get_booked_invoice`, `download_invoice_pdf`
 - **Reference data**: `list_payment_terms`, `list_customer_groups`, `list_vat_zones`
+- **Accounting**: `list_account_entries`
 
 ### Special Tool Behaviors
 
@@ -75,6 +78,11 @@ Tools should catch `EconomicApiError` and return error details in MCP format. Us
 - If `createCustomerIfMissing=true` and customer doesn't exist, creates the customer first
 - If line `productNumber` is omitted, defaults to `"1"`
 - Fetches invoice template from e-conomic API if required fields (layout, payment terms, recipient) are missing
+
+**list_account_entries**:
+- Resolves the accounting year covering the requested range, then queries the account-scoped entries endpoint (`/accounts/{n}/accounting-years/{year}/entries`)
+- The date range must fall within a single accounting year; the entries endpoint does not allow filtering on `account.accountNumber`, which is why the account-scoped endpoint is used
+- Returns a summary (`account`, `count`, `sum`) plus per-entry date, text, amount, voucher/entry numbers and entry type
 
 **upsert_product**:
 - `productGroupNumber` is required when creating a new product
