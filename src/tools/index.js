@@ -16,6 +16,10 @@ import { registerDownloadInvoicePdfTool } from "./download-invoice-pdf.js";
 import { registerListPaymentTermsTool } from "./list-payment-terms.js";
 import { registerListCustomerGroupsTool } from "./list-customer-groups.js";
 import { registerListVatZonesTool } from "./list-vat-zones.js";
+import { registerListAccountingYearsTool } from "./list-accounting-years.js";
+import { registerListAccountsTool } from "./list-accounts.js";
+import { registerListVatAccountsTool } from "./list-vat-accounts.js";
+import { registerListJournalsTool } from "./list-journals.js";
 
 const registerTools = (server) => {
   registerHelloTool(server);
@@ -36,6 +40,10 @@ const registerTools = (server) => {
   registerListPaymentTermsTool(server);
   registerListCustomerGroupsTool(server);
   registerListVatZonesTool(server);
+  registerListAccountingYearsTool(server);
+  registerListAccountsTool(server);
+  registerListVatAccountsTool(server);
+  registerListJournalsTool(server);
 };
 
 export default registerTools;
