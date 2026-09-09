@@ -4059,24 +4059,17 @@ export const registerListAccountEntriesTool = (server) => {
         const entriesPath = accountEntriesPath(accountNumber, year);
 
         const rawEntries = [];
-        let skipPages = 0;
+        let page = 1;
         while (true) {
-          const query = new URLSearchParams({
-            filter,
-            pagesize: String(ENTRIES_PAGE_SIZE),
-            skippages: String(skipPages),
+          const query = buildListQuery({ pageSize: ENTRIES_PAGE_SIZE, page, filter });
+          const data = await request("GET", `${entriesPath}?${query}`, undefined, {
+            company,
           });
-          const data = await request(
-            "GET",
-            `${entriesPath}?${query.toString()}`,
-            undefined,
-            { company }
-          );
           rawEntries.push(...(data?.collection ?? []));
           if (!data?.pagination?.nextPage) {
             break;
           }
-          skipPages += 1;
+          page += 1;
         }
 
         return jsonContent(summarizeEntries(accountNumber, rawEntries));
