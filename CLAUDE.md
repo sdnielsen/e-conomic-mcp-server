@@ -13,6 +13,7 @@ This is an MCP (Model Context Protocol) server that provides AI assistants with 
 - `ECONOMIC_AGREEMENT_GRANT_TOKEN` (optional single-company form, exposed as company `default`)
 - `ECONOMIC_BASE_URL` (optional, must match `https://restapi.e-conomic.com`)
 - `ECONOMIC_DEBUG` (optional, set to `true` to emit JSON debug logs to stderr)
+- `ECONOMIC_ENV_FILE` (optional. Path of the `.env` file to load; defaults to the one next to package.json. Tests point it at a missing file.)
 
 Every tool except `hello` and `list_companies` takes an optional `company` argument. With one company configured it may be omitted; with several it is required and an omitted or unknown value is an error (`E_COMPANY_REQUIRED`, `E_UNKNOWN_COMPANY`).
 
@@ -76,6 +77,8 @@ All tools use `request()` / `requestBinary()` and pass `{ company }` through.
 
 ### Error Handling
 Tools catch `EconomicApiError` and return `errorToContent(error)` from `src/tools/tool-helpers.js`, which logs details to stderr and returns `{ isError: true, content: [...] }` with `error`, `status` and `errorCode`. Successful results use `jsonContent(data)`.
+
+Local codes: `E_NO_CREDENTIALS`, `E_COMPANY_REQUIRED`, `E_UNKNOWN_COMPANY`, `E_INVALID_BASE_URL`, `E_TIMEOUT`, `E_NETWORK`, `E_ACCOUNTING_YEAR_RANGE`, `E_PDF_TOO_LARGE`, `E_CUSTOMER_MISSING`, `E_PRODUCT_GROUP_REQUIRED`.
 
 ### Logging
 - `src/utils/logger.js` provides structured JSON logging to stderr

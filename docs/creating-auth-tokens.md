@@ -107,7 +107,7 @@ If you want to test without real credentials:
 
 ```
 ECONOMIC_APP_SECRET_TOKEN=demo
-ECONOMIC_AGREEMENT_GRANT_TOKEN=demo
+ECONOMIC_GRANT_DEMO=demo
 ```
 
 The demo API supports GET only and returns sample data.

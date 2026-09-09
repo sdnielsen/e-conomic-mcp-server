@@ -35,9 +35,10 @@ Put them in the `env` block of your Claude Code user settings (`~/.claude/settin
 | --- | --- |
 | `ECONOMIC_APP_SECRET_TOKEN` | Required. Shared by all companies. |
 | `ECONOMIC_GRANT_<NAME>` | One per company. `ECONOMIC_GRANT_ACME` becomes company `acme`. |
-| `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Optional, older single-company form. Becomes company `default`. |
+| `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Optional, older single-company form. Becomes company `default`. Remove it once you switch to `ECONOMIC_GRANT_<NAME>` variables, otherwise it counts as a second company. |
 | `ECONOMIC_BASE_URL` | Optional. Must be `https://restapi.e-conomic.com`. |
 | `ECONOMIC_DEBUG` | Optional. `true` logs each request to stderr as JSON. |
+| `ECONOMIC_ENV_FILE` | Optional. Path of the `.env` file to load; defaults to the one next to package.json. Tests point it at a missing file. |
 
 With one company configured, `company` may be omitted. With several, every tool requires it and refuses to guess. Call `list_companies` to see the configured keys and the company each token belongs to.
 
@@ -79,7 +80,7 @@ Every tool except `hello` and `list_companies` accepts `company`. Tools that cha
 | `list_account_totals` | Total per account for a year or one period. | `accountingYear`, optional `periodNumber`, `pageSize`, `page` |
 | `list_journal_draft_entries` | Unbooked entries in a journal. | `journalNumber`, optional `fromDate`, `toDate`, `pageSize`, `page` |
 
-Errors come back as tool results with `isError: true` and a JSON body `{ error, status, errorCode }`. Local codes: `E_NO_CREDENTIALS`, `E_COMPANY_REQUIRED`, `E_UNKNOWN_COMPANY`, `E_TIMEOUT`, `E_NETWORK`, `E_ACCOUNTING_YEAR_RANGE`.
+Errors come back as tool results with `isError: true` and a JSON body `{ error, status, errorCode }`. Local codes: `E_NO_CREDENTIALS`, `E_COMPANY_REQUIRED`, `E_UNKNOWN_COMPANY`, `E_INVALID_BASE_URL`, `E_TIMEOUT`, `E_NETWORK`, `E_ACCOUNTING_YEAR_RANGE`, `E_PDF_TOO_LARGE`, `E_CUSTOMER_MISSING`, `E_PRODUCT_GROUP_REQUIRED`.
 
 ## Development
 
