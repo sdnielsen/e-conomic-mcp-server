@@ -1,4 +1,5 @@
 import { registerHelloTool } from "./hello.js";
+import { registerListCompaniesTool } from "./list-companies.js";
 import { registerListCustomersTool } from "./list-customers.js";
 import { registerCreateInvoiceDraftTool } from "./create-invoice-draft.js";
 import { registerUpdateInvoiceDraftTool } from "./update-invoice-draft.js";
@@ -18,6 +19,7 @@ import { registerListVatZonesTool } from "./list-vat-zones.js";
 
 const registerTools = (server) => {
   registerHelloTool(server);
+  registerListCompaniesTool(server);
   registerListCustomersTool(server);
   registerGetCustomerTool(server);
   registerListProductsTool(server);
