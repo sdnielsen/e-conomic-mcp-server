@@ -51,8 +51,9 @@ const fetchDraft = (draftInvoiceNumber, company) =>
  *
  * `dueDate` is only kept or set when the payment terms are of type
  * `dueDate` (where the API requires it) or when `input.dueDate` was given
- * explicitly; the GET response always returns a computed `dueDate` even for
- * other payment terms types, and sending it back would be rejected.
+ * explicitly. The GET response returns a computed `dueDate` for every draft,
+ * while the PUT schema describes the field as used only for that payment
+ * terms type, so it is not echoed back for other types.
  *
  * Args:
  *   current (object): The draft as returned by the API. Not mutated.
