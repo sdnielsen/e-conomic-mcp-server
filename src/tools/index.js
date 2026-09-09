@@ -20,6 +20,7 @@ import { registerListAccountingYearsTool } from "./list-accounting-years.js";
 import { registerListAccountsTool } from "./list-accounts.js";
 import { registerListVatAccountsTool } from "./list-vat-accounts.js";
 import { registerListJournalsTool } from "./list-journals.js";
+import { registerListBookedEntriesTool } from "./list-booked-entries.js";
 
 const registerTools = (server) => {
   registerHelloTool(server);
@@ -44,6 +45,7 @@ const registerTools = (server) => {
   registerListAccountsTool(server);
   registerListVatAccountsTool(server);
   registerListJournalsTool(server);
+  registerListBookedEntriesTool(server);
 };
 
 export default registerTools;
