@@ -41,13 +41,27 @@ X-AgreementGrantToken: <AgreementGrantToken>
 
 ## Environment setup
 
-Create a `.env` in the repo root (never commit it) and add:
+Each company (agreement) gets its own grant token. Name the variable after the company:
 
 ```
 ECONOMIC_APP_SECRET_TOKEN=...
-ECONOMIC_AGREEMENT_GRANT_TOKEN=...
-ECONOMIC_BASE_URL=https://restapi.e-conomic.com
+ECONOMIC_GRANT_ACME=...
+ECONOMIC_GRANT_BETA=...
 ```
+
+`ECONOMIC_GRANT_ACME` is the company `acme` in tool calls. Repeat the grant flow below once per company; the App Secret Token stays the same.
+
+For Claude Code, put these in the `env` block of `~/.claude/settings.json`. For local development, a `.env` next to `package.json` works too (never commit it).
+
+## Several companies
+
+1. In the developer agreement, copy the app's Installation URL once.
+2. Log into e-conomic as an administrator of the first company. If the login shows several agreements, click **Administer** on the right one first.
+3. Open the Installation URL and approve. Copy the Agreement Grant Token into `ECONOMIC_GRANT_<NAME>` for that company.
+4. Repeat for every company.
+5. Run `list_companies` in Claude Code. Each entry shows the agreement number and company name the token belongs to, which catches mixed-up tokens immediately.
+
+The grant token belongs to the agreement and the app, not to a person. Two people using the same company share the same token. e-conomic records API changes against the app, not the individual user.
 
 ## FAQ
 
@@ -93,7 +107,7 @@ If you want to test without real credentials:
 
 ```
 ECONOMIC_APP_SECRET_TOKEN=demo
-ECONOMIC_AGREEMENT_GRANT_TOKEN=demo
+ECONOMIC_GRANT_DEMO=demo
 ```
 
 The demo API supports GET only and returns sample data.

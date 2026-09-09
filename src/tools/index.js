@@ -1,4 +1,5 @@
 import { registerHelloTool } from "./hello.js";
+import { registerListCompaniesTool } from "./list-companies.js";
 import { registerListCustomersTool } from "./list-customers.js";
 import { registerCreateInvoiceDraftTool } from "./create-invoice-draft.js";
 import { registerUpdateInvoiceDraftTool } from "./update-invoice-draft.js";
@@ -15,9 +16,18 @@ import { registerDownloadInvoicePdfTool } from "./download-invoice-pdf.js";
 import { registerListPaymentTermsTool } from "./list-payment-terms.js";
 import { registerListCustomerGroupsTool } from "./list-customer-groups.js";
 import { registerListVatZonesTool } from "./list-vat-zones.js";
+import { registerListAccountingYearsTool } from "./list-accounting-years.js";
+import { registerListAccountsTool } from "./list-accounts.js";
+import { registerListVatAccountsTool } from "./list-vat-accounts.js";
+import { registerListJournalsTool } from "./list-journals.js";
+import { registerListBookedEntriesTool } from "./list-booked-entries.js";
+import { registerListAccountEntriesTool } from "./list-account-entries.js";
+import { registerListAccountTotalsTool } from "./list-account-totals.js";
+import { registerListJournalDraftEntriesTool } from "./list-journal-draft-entries.js";
 
 const registerTools = (server) => {
   registerHelloTool(server);
+  registerListCompaniesTool(server);
   registerListCustomersTool(server);
   registerGetCustomerTool(server);
   registerListProductsTool(server);
@@ -34,6 +44,14 @@ const registerTools = (server) => {
   registerListPaymentTermsTool(server);
   registerListCustomerGroupsTool(server);
   registerListVatZonesTool(server);
+  registerListAccountingYearsTool(server);
+  registerListAccountsTool(server);
+  registerListVatAccountsTool(server);
+  registerListJournalsTool(server);
+  registerListBookedEntriesTool(server);
+  registerListAccountEntriesTool(server);
+  registerListAccountTotalsTool(server);
+  registerListJournalDraftEntriesTool(server);
 };
 
 export default registerTools;

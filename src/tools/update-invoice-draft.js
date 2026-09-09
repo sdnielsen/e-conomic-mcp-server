@@ -1,84 +1,138 @@
 import { z } from "zod";
-import { request } from "../economic/api-client.js";
-import { errorToContent } from "./tool-helpers.js";
+import { request, resolveCompanyName } from "../economic/api-client.js";
+import {
+  companySchema,
+  dateSchema,
+  errorToContent,
+  jsonContent,
+} from "./tool-helpers.js";
+import { buildLine, lineSchema } from "./invoice-lines.js";
 
-const DEFAULT_PRODUCT_NUMBER = "1";
+/**
+ * Fields of a draft invoice that may be sent back on PUT. Taken from the
+ * published schema `invoices.drafts.draftInvoiceNumber.put`, without the
+ * computed amount fields and `pdf`, plus `layout`, which the API accepts on
+ * update even though the PUT schema omits it.
+ */
+export const DRAFT_WRITABLE_FIELDS = [
+  "draftInvoiceNumber",
+  "date",
+  "currency",
+  "exchangeRate",
+  "dueDate",
+  "layout",
+  "project",
+  "paymentTerms",
+  "customer",
+  "recipient",
+  "deliveryLocation",
+  "delivery",
+  "notes",
+  "references",
+  "lines",
+];
 
-const lineSchema = z.object({
-  description: z
-    .string()
-    .min(1)
-    .max(2000)
-    .transform((s) => s.trim())
-    .describe("Line description"),
-  quantity: z.number().positive().describe("Quantity"),
-  unitPrice: z.number().describe("Unit net price"),
-  productNumber: z
-    .string()
-    .min(1)
-    .max(50)
-    .optional()
-    .describe("Optional product number"),
-  unitNumber: z.number().int().positive().optional().describe("Optional unit number"),
-  discountPercentage: z
-    .number()
-    .min(0)
-    .max(100)
-    .optional()
-    .describe("Optional discount percentage"),
-});
+/**
+ * Fetches a draft invoice.
+ *
+ * Args:
+ *   draftInvoiceNumber (number): Draft number.
+ *   company (string|undefined): Company key.
+ *
+ * Returns:
+ *   object: The draft as returned by the API.
+ */
+const fetchDraft = (draftInvoiceNumber, company) =>
+  request("GET", `/invoices/drafts/${draftInvoiceNumber}`, undefined, { company });
 
-const buildLine = (line, index) => {
-  const payload = {
-    lineNumber: index + 1,
-    sortKey: index + 1,
-    description: line.description,
-    quantity: line.quantity,
-    unitNetPrice: line.unitPrice,
-  };
+/**
+ * Builds the PUT payload for a draft: the current writable fields with the
+ * requested changes applied on top.
+ *
+ * `dueDate` is only kept or set when the payment terms are of type
+ * `dueDate` (where the API requires it) or when `input.dueDate` was given
+ * explicitly. The GET response returns a computed `dueDate` for every draft,
+ * while the PUT schema describes the field as used only for that payment
+ * terms type, so it is not echoed back for other types.
+ *
+ * Args:
+ *   current (object): The draft as returned by the API. Not mutated.
+ *   input (object): Parsed tool input.
+ *
+ * Returns:
+ *   object: Payload for `PUT /invoices/drafts/{draftInvoiceNumber}`.
+ */
+export const buildDraftUpdatePayload = (current, input) => {
+  const payload = {};
 
-  const resolvedProductNumber = line.productNumber ?? DEFAULT_PRODUCT_NUMBER;
-
-  if (line.discountPercentage !== undefined) {
-    payload.discountPercentage = line.discountPercentage;
+  for (const field of DRAFT_WRITABLE_FIELDS) {
+    if (current[field] !== undefined) {
+      payload[field] = current[field];
+    }
   }
 
-  if (resolvedProductNumber) {
-    payload.product = { productNumber: resolvedProductNumber };
+  if (
+    !input.dueDate &&
+    current.paymentTerms?.paymentTermsType !== "dueDate"
+  ) {
+    delete payload.dueDate;
   }
 
-  if (line.unitNumber) {
-    payload.unit = { unitNumber: line.unitNumber };
+  if (input.date) {
+    payload.date = input.date;
+  }
+
+  if (input.dueDate) {
+    payload.dueDate = input.dueDate;
+  }
+
+  if (input.currency) {
+    payload.currency = input.currency;
+  }
+
+  if (input.paymentTermsNumber) {
+    payload.paymentTerms = { paymentTermsNumber: input.paymentTermsNumber };
+  }
+
+  if (input.layoutNumber) {
+    payload.layout = { layoutNumber: input.layoutNumber };
+  }
+
+  if (input.recipientName || input.recipientVatZoneNumber) {
+    payload.recipient = { ...(payload.recipient ?? {}) };
+  }
+
+  if (input.recipientName) {
+    payload.recipient.name = input.recipientName;
+  }
+
+  if (input.recipientVatZoneNumber) {
+    payload.recipient.vatZone = { vatZoneNumber: input.recipientVatZoneNumber };
+  }
+
+  if (input.lines) {
+    payload.lines = input.lines.map(buildLine);
   }
 
   return payload;
 };
-
-const fetchDraft = (draftInvoiceNumber) =>
-  request("GET", `/invoices/drafts/${draftInvoiceNumber}`);
 
 export const registerUpdateInvoiceDraftTool = (server) => {
   server.registerTool(
     "update_invoice_draft",
     {
       title: "Update invoice draft",
-      description: "Update an existing draft invoice in e-conomic.",
+      description:
+        "Update an existing draft invoice in e-conomic. Fields that are not given keep their current values. Giving lines replaces all lines.",
       inputSchema: z.object({
+        company: companySchema,
         draftInvoiceNumber: z
           .number()
           .int()
           .positive()
           .describe("Draft invoice number"),
-        date: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .optional()
-          .describe("Invoice date (YYYY-MM-DD)"),
-        dueDate: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .optional()
-          .describe("Due date (YYYY-MM-DD)"),
+        date: dateSchema.optional().describe("Invoice date (YYYY-MM-DD)"),
+        dueDate: dateSchema.optional().describe("Due date (YYYY-MM-DD)"),
         currency: z
           .string()
           .length(3)
@@ -97,95 +151,26 @@ export const registerUpdateInvoiceDraftTool = (server) => {
         lines: z.array(lineSchema).min(1).optional().describe("Invoice lines"),
       }),
     },
-    async ({
-      draftInvoiceNumber,
-      date,
-      dueDate,
-      currency,
-      paymentTermsNumber,
-      layoutNumber,
-      recipientName,
-      recipientVatZoneNumber,
-      lines,
-    }) => {
+    async (input) => {
+      const { company, draftInvoiceNumber } = input;
       try {
-        const current = await fetchDraft(draftInvoiceNumber);
-
-        // Build payload explicitly from known safe fields only
-        const payload = {
-          draftInvoiceNumber: current.draftInvoiceNumber,
-          date: current.date,
-          currency: current.currency,
-          customer: current.customer,
-          recipient: current.recipient,
-          layout: current.layout,
-          paymentTerms: current.paymentTerms,
-          lines: current.lines,
-        };
-
-        if (current.dueDate) {
-          payload.dueDate = current.dueDate;
-        }
-
-        if (date) {
-          payload.date = date;
-        }
-
-        if (dueDate) {
-          payload.dueDate = dueDate;
-        }
-
-        if (currency) {
-          payload.currency = currency;
-        }
-
-        if (paymentTermsNumber) {
-          payload.paymentTerms = { paymentTermsNumber };
-        }
-
-        if (layoutNumber) {
-          payload.layout = { layoutNumber };
-        }
-
-        if (recipientName || recipientVatZoneNumber) {
-          payload.recipient = payload.recipient ?? {};
-        }
-
-        if (recipientName) {
-          payload.recipient.name = recipientName;
-        }
-
-        if (recipientVatZoneNumber) {
-          payload.recipient.vatZone = { vatZoneNumber: recipientVatZoneNumber };
-        }
-
-        if (lines) {
-          payload.lines = lines.map(buildLine);
-        }
+        const current = await fetchDraft(draftInvoiceNumber, company);
+        const payload = buildDraftUpdatePayload(current, input);
 
         const data = await request(
           "PUT",
           `/invoices/drafts/${draftInvoiceNumber}`,
-          payload
+          payload,
+          { company }
         );
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  draftInvoiceNumber: data?.draftInvoiceNumber,
-                  customerNumber: data?.customer?.customerNumber,
-                  status: "draft",
-                  self: data?.self,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return jsonContent({
+          company: resolveCompanyName(company),
+          draftInvoiceNumber: data?.draftInvoiceNumber,
+          customerNumber: data?.customer?.customerNumber,
+          status: "draft",
+          self: data?.self,
+        });
       } catch (error) {
         return errorToContent(error);
       }

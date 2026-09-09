@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { request } from "../economic/api-client.js";
-import { errorToContent } from "./tool-helpers.js";
+import { companySchema, errorToContent, jsonContent } from "./tool-helpers.js";
 
 export const registerGetBookedInvoiceTool = (server) => {
   server.registerTool(
@@ -9,6 +9,7 @@ export const registerGetBookedInvoiceTool = (server) => {
       title: "Get booked invoice",
       description: "Fetch a booked invoice by number.",
       inputSchema: z.object({
+        company: companySchema,
         bookedInvoiceNumber: z
           .number()
           .int()
@@ -16,20 +17,15 @@ export const registerGetBookedInvoiceTool = (server) => {
           .describe("Booked invoice number"),
       }),
     },
-    async ({ bookedInvoiceNumber }) => {
+    async ({ company, bookedInvoiceNumber }) => {
       try {
         const data = await request(
           "GET",
-          `/invoices/booked/${bookedInvoiceNumber}`
+          `/invoices/booked/${bookedInvoiceNumber}`,
+          undefined,
+          { company }
         );
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(data, null, 2),
-            },
-          ],
-        };
+        return jsonContent(data);
       } catch (error) {
         return errorToContent(error);
       }

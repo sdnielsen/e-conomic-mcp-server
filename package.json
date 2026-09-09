@@ -1,20 +1,30 @@
 {
   "name": "e-conomic-mcp-server",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.1.0",
+  "description": "MCP server for the e-conomic bookkeeping API with support for several companies",
   "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
-    "test:harness": "node scripts/test-harness.js",
-    "test": "npm run test:harness"
+    "build": "node scripts/build.js",
+    "test": "npm run build && npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "node --test \"test/unit/*.test.js\"",
+    "test:integration": "node --test \"test/integration/*.test.js\"",
+    "test:e2e": "node --test \"test/e2e/*.test.js\"",
+    "harness": "node scripts/test-harness.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
+  "keywords": ["mcp", "e-conomic", "bookkeeping", "claude-code-plugin"],
+  "author": "SDNielsen ApS",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "dotenv": "^16.4.5",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
   }
 }

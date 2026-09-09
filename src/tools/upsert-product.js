@@ -1,8 +1,13 @@
 import { z } from "zod";
-import { EconomicApiError, request } from "../economic/api-client.js";
-import { errorToContent } from "./tool-helpers.js";
+import {
+  EconomicApiError,
+  request,
+  resolveCompanyName,
+} from "../economic/api-client.js";
+import { companySchema, errorToContent, jsonContent } from "./tool-helpers.js";
 
 const productSchema = z.object({
+  company: companySchema,
   productNumber: z
     .string()
     .min(1)
@@ -32,6 +37,19 @@ const productSchema = z.object({
     .optional()
     .describe("Department number"),
 });
+
+/**
+ * Builds the API path of one product.
+ *
+ * Args:
+ *   productNumber (string): Product number, URL-encoded because product
+ *     numbers are free text.
+ *
+ * Returns:
+ *   string: Path relative to the API base URL.
+ */
+export const productPath = (productNumber) =>
+  `/products/${encodeURIComponent(productNumber)}`;
 
 const buildProductPayload = (input) => {
   const payload = {
@@ -80,7 +98,9 @@ export const registerUpsertProductTool = (server) => {
       try {
         let exists = false;
         try {
-          await request("GET", `/products/${input.productNumber}`);
+          await request("GET", productPath(input.productNumber), undefined, {
+            company: input.company,
+          });
           exists = true;
         } catch (error) {
           if (!(error instanceof EconomicApiError) || error.status !== 404) {
@@ -98,17 +118,17 @@ export const registerUpsertProductTool = (server) => {
         }
 
         const data = exists
-          ? await request("PUT", `/products/${input.productNumber}`, payload)
-          : await request("POST", "/products", payload);
+          ? await request("PUT", productPath(input.productNumber), payload, {
+              company: input.company,
+            })
+          : await request("POST", "/products", payload, {
+              company: input.company,
+            });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(data, null, 2),
-            },
-          ],
-        };
+        return jsonContent({
+          company: resolveCompanyName(input.company),
+          product: data,
+        });
       } catch (error) {
         return errorToContent(error);
       }
