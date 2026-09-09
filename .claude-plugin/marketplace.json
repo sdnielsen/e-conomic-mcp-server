@@ -1,0 +1,13 @@
+{
+  "name": "sdnielsen",
+  "owner": {
+    "name": "SDNielsen ApS"
+  },
+  "plugins": [
+    {
+      "name": "e-conomic",
+      "source": "./",
+      "description": "MCP server for the e-conomic bookkeeping API with support for several companies."
+    }
+  ]
+}
