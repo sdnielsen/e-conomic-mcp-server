@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { request } from "../economic/api-client.js";
-import { errorToContent } from "./tool-helpers.js";
+import {
+  buildListQuery,
+  companySchema,
+  errorToContent,
+  jsonContent,
+  pageSchema,
+  pageSizeSchema,
+} from "./tool-helpers.js";
 
 export const registerListCustomerGroupsTool = (server) => {
   server.registerTool(
@@ -9,43 +16,16 @@ export const registerListCustomerGroupsTool = (server) => {
       title: "List customer groups",
       description: "Fetch a page of customer groups.",
       inputSchema: z.object({
-        pageSize: z
-          .number()
-          .int()
-          .min(1)
-          .max(1000)
-          .optional()
-          .describe("Number of customer groups per page (default 100)."),
-        page: z
-          .number()
-          .int()
-          .min(1)
-          .optional()
-          .describe("Page number to fetch (default 1)."),
+        company: companySchema,
+        pageSize: pageSizeSchema,
+        page: pageSchema,
       }),
     },
-    async ({ pageSize, page }) => {
+    async ({ company, pageSize, page }) => {
       try {
-        const resolvedPageSize = pageSize ?? 100;
-        const resolvedPage = page ?? 1;
-        const skipPages = resolvedPage - 1;
-        const query = new URLSearchParams({
-          pagesize: String(resolvedPageSize),
-          skippages: String(skipPages),
-        });
-
-        const data = await request(
-          "GET",
-          `/customer-groups?${query.toString()}`
-        );
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(data, null, 2),
-            },
-          ],
-        };
+        const query = buildListQuery({ pageSize, page });
+        const data = await request("GET", `/customer-groups?${query}`, undefined, { company });
+        return jsonContent(data);
       } catch (error) {
         return errorToContent(error);
       }
