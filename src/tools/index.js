@@ -21,6 +21,7 @@ import { registerListAccountsTool } from "./list-accounts.js";
 import { registerListVatAccountsTool } from "./list-vat-accounts.js";
 import { registerListJournalsTool } from "./list-journals.js";
 import { registerListBookedEntriesTool } from "./list-booked-entries.js";
+import { registerListAccountEntriesTool } from "./list-account-entries.js";
 
 const registerTools = (server) => {
   registerHelloTool(server);
@@ -46,6 +47,7 @@ const registerTools = (server) => {
   registerListVatAccountsTool(server);
   registerListJournalsTool(server);
   registerListBookedEntriesTool(server);
+  registerListAccountEntriesTool(server);
 };
 
 export default registerTools;
