@@ -7158,6 +7158,7 @@ var require_dist = __commonJS({
 // src/server.js
 var import_dotenv = __toESM(require_main(), 1);
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 // node_modules/zod/v3/external.js
 var external_exports = {};
@@ -21196,38 +21197,6 @@ var StdioServerTransport = class {
   }
 };
 
-// package.json
-var package_default = {
-  name: "e-conomic-mcp-server",
-  version: "1.1.0",
-  description: "MCP server for the e-conomic bookkeeping API with support for several companies",
-  main: "src/server.js",
-  type: "module",
-  engines: {
-    node: ">=20"
-  },
-  scripts: {
-    start: "node src/server.js",
-    build: "node scripts/build.js",
-    test: "npm run build && npm run test:unit && npm run test:integration && npm run test:e2e",
-    "test:unit": 'node --test "test/unit/*.test.js"',
-    "test:integration": 'node --test "test/integration/*.test.js"',
-    "test:e2e": 'node --test "test/e2e/*.test.js"',
-    harness: "node scripts/test-harness.js"
-  },
-  keywords: ["mcp", "e-conomic", "bookkeeping", "claude-code-plugin"],
-  author: "SDNielsen ApS",
-  license: "MIT",
-  dependencies: {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    dotenv: "^16.4.5",
-    zod: "^3.23.8"
-  },
-  devDependencies: {
-    esbuild: "^0.25.12"
-  }
-};
-
 // src/tools/hello.js
 var registerHelloTool = (server2) => {
   server2.registerTool(
@@ -21272,13 +21241,14 @@ var LEGACY_GRANT_VARIABLE = "ECONOMIC_AGREEMENT_GRANT_TOKEN";
 var LEGACY_COMPANY_KEY = "default";
 var loadCompanies = (env) => {
   const companies = /* @__PURE__ */ new Map();
+  let legacyGrantToken;
   for (const [name, rawValue] of Object.entries(env)) {
     const value = typeof rawValue === "string" ? rawValue.trim() : "";
     if (!value) {
       continue;
     }
     if (name === LEGACY_GRANT_VARIABLE) {
-      companies.set(LEGACY_COMPANY_KEY, value);
+      legacyGrantToken = value;
       continue;
     }
     if (name.startsWith(GRANT_PREFIX)) {
@@ -21287,6 +21257,9 @@ var loadCompanies = (env) => {
         companies.set(suffix.toLowerCase(), value);
       }
     }
+  }
+  if (legacyGrantToken !== void 0 && !companies.has(LEGACY_COMPANY_KEY)) {
+    companies.set(LEGACY_COMPANY_KEY, legacyGrantToken);
   }
   return companies;
 };
@@ -21487,6 +21460,7 @@ var companySchema = external_exports.string().min(1).max(50).optional().describe
 var pageSizeSchema = external_exports.number().int().min(1).max(1e3).optional().describe("Number of items per page (default 100, max 1000).");
 var pageSchema = external_exports.number().int().min(1).optional().describe("Page number to fetch (default 1).");
 var dateSchema = external_exports.string().regex(DATE_PATTERN, "Must be formatted as YYYY-MM-DD");
+var accountingYearSchema = external_exports.string().regex(/^\d{4}(\/\d{4})?$/, "Must be a year like 2025 or 2025/2026").describe("Accounting year identifier, for example 2025 or 2025/2026.");
 var jsonContent = (data) => ({
   content: [
     {
@@ -21855,6 +21829,9 @@ var buildDraftUpdatePayload = (current, input) => {
       payload[field] = current[field];
     }
   }
+  if (!input.dueDate && current.paymentTerms?.paymentTermsType !== "dueDate") {
+    delete payload.dueDate;
+  }
   if (input.date) {
     payload.date = input.date;
   }
@@ -22109,6 +22086,7 @@ var productSchema = external_exports.object({
   productGroupNumber: external_exports.number().int().positive().optional().describe("Product group number (required when creating)"),
   departmentNumber: external_exports.number().int().positive().optional().describe("Department number")
 });
+var productPath = (productNumber) => `/products/${encodeURIComponent(productNumber)}`;
 var buildProductPayload = (input) => {
   const payload = {
     productNumber: input.productNumber,
@@ -22148,7 +22126,7 @@ var registerUpsertProductTool = (server2) => {
       try {
         let exists = false;
         try {
-          await request("GET", `/products/${input.productNumber}`, void 0, {
+          await request("GET", productPath(input.productNumber), void 0, {
             company: input.company
           });
           exists = true;
@@ -22164,7 +22142,7 @@ var registerUpsertProductTool = (server2) => {
             { status: 400, errorCode: "E_PRODUCT_GROUP_REQUIRED" }
           );
         }
-        const data = exists ? await request("PUT", `/products/${input.productNumber}`, payload, {
+        const data = exists ? await request("PUT", productPath(input.productNumber), payload, {
           company: input.company
         }) : await request("POST", "/products", payload, {
           company: input.company
@@ -22576,7 +22554,7 @@ var registerListBookedEntriesTool = (server2) => {
       description: "List booked ledger entries of one accounting year, optionally narrowed by date range, voucher number, text, entry type, amount, customer or supplier. This is the main lookup for checking VAT and finding bookkeeping errors. Get the year identifier from list_accounting_years.",
       inputSchema: external_exports.object({
         company: companySchema,
-        accountingYear: external_exports.string().min(4).max(9).describe("Accounting year identifier, for example 2025 or 2025/2026."),
+        accountingYear: accountingYearSchema,
         fromDate: dateSchema.optional().describe("Inclusive start date (YYYY-MM-DD)."),
         toDate: dateSchema.optional().describe("Inclusive end date (YYYY-MM-DD)."),
         voucherNumber: external_exports.number().int().optional().describe("Only entries of this voucher."),
@@ -22708,7 +22686,7 @@ var registerListAccountTotalsTool = (server2) => {
       description: "List the booked total per account for an accounting year, or for one period of it. Use it to reconcile VAT account balances against sales and purchase accounts.",
       inputSchema: external_exports.object({
         company: companySchema,
-        accountingYear: external_exports.string().min(4).max(9).describe("Accounting year identifier, for example 2025 or 2025/2026."),
+        accountingYear: accountingYearSchema,
         periodNumber: external_exports.number().int().positive().optional().describe("Period number within the year (1-based). Omit for the whole year."),
         pageSize: pageSizeSchema,
         page: pageSchema
@@ -22800,8 +22778,10 @@ var registerTools = (server2) => {
 var tools_default = registerTools;
 
 // src/server.js
+var require2 = createRequire(import.meta.url);
+var pkg = require2("../package.json");
 import_dotenv.default.config({
-  path: fileURLToPath(new URL("../.env", import.meta.url)),
+  path: process.env.ECONOMIC_ENV_FILE ?? fileURLToPath(new URL("../.env", import.meta.url)),
   quiet: true
 });
 var SERVER_INSTRUCTIONS = [
@@ -22812,7 +22792,7 @@ var SERVER_INSTRUCTIONS = [
 var server = new McpServer(
   {
     name: "e-conomic-mcp-server",
-    version: package_default.version
+    version: pkg.version
   },
   { instructions: SERVER_INSTRUCTIONS }
 );

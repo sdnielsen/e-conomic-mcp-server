@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { request } from "../economic/api-client.js";
 import {
+  accountingYearSchema,
   buildListQuery,
   companySchema,
   dateRangeClauses,
@@ -67,11 +68,7 @@ export const registerListBookedEntriesTool = (server) => {
         "List booked ledger entries of one accounting year, optionally narrowed by date range, voucher number, text, entry type, amount, customer or supplier. This is the main lookup for checking VAT and finding bookkeeping errors. Get the year identifier from list_accounting_years.",
       inputSchema: z.object({
         company: companySchema,
-        accountingYear: z
-          .string()
-          .min(4)
-          .max(9)
-          .describe("Accounting year identifier, for example 2025 or 2025/2026."),
+        accountingYear: accountingYearSchema,
         fromDate: dateSchema.optional().describe("Inclusive start date (YYYY-MM-DD)."),
         toDate: dateSchema.optional().describe("Inclusive end date (YYYY-MM-DD)."),
         voucherNumber: z.number().int().optional().describe("Only entries of this voucher."),

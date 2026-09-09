@@ -49,6 +49,11 @@ const fetchDraft = (draftInvoiceNumber, company) =>
  * Builds the PUT payload for a draft: the current writable fields with the
  * requested changes applied on top.
  *
+ * `dueDate` is only kept or set when the payment terms are of type
+ * `dueDate` (where the API requires it) or when `input.dueDate` was given
+ * explicitly; the GET response always returns a computed `dueDate` even for
+ * other payment terms types, and sending it back would be rejected.
+ *
  * Args:
  *   current (object): The draft as returned by the API. Not mutated.
  *   input (object): Parsed tool input.
@@ -63,6 +68,13 @@ export const buildDraftUpdatePayload = (current, input) => {
     if (current[field] !== undefined) {
       payload[field] = current[field];
     }
+  }
+
+  if (
+    !input.dueDate &&
+    current.paymentTerms?.paymentTermsType !== "dueDate"
+  ) {
+    delete payload.dueDate;
   }
 
   if (input.date) {

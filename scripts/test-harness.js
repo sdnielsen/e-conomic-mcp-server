@@ -272,6 +272,7 @@ const main = async () => {
       }
     }
     delete process.env.ECONOMIC_AGREEMENT_GRANT_TOKEN;
+    delete process.env.ECONOMIC_BASE_URL;
     process.env.ECONOMIC_APP_SECRET_TOKEN = "demo";
     process.env.ECONOMIC_GRANT_DEMO = "demo";
   }

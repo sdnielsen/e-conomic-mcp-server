@@ -99,6 +99,14 @@ test("buildCustomerUpdatePayload drops computed and link fields", () => {
   assert.equal("cvr" in payload, false);
 });
 
+test("buildCustomerUpdatePayload leaves out a writable field absent from current", () => {
+  const { salesPerson, ...currentWithoutSalesPerson } = current;
+
+  const payload = buildCustomerUpdatePayload(currentWithoutSalesPerson, { customerNumber: 1 });
+
+  assert.equal("salesPerson" in payload, false);
+});
+
 test("buildCustomerUpdatePayload applies every supported change", () => {
   const payload = buildCustomerUpdatePayload(current, {
     customerNumber: 1,

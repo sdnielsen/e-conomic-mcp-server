@@ -30,6 +30,20 @@ test("loadCompanies maps the legacy variable to the default company", () => {
   assert.deepEqual([...companies.entries()], [["default", "legacy-token"]]);
 });
 
+test("loadCompanies never lets the legacy variable override ECONOMIC_GRANT_DEFAULT, in either order", () => {
+  const legacyFirst = loadCompanies({
+    ECONOMIC_AGREEMENT_GRANT_TOKEN: "legacy-token",
+    ECONOMIC_GRANT_DEFAULT: "grant-default-token",
+  });
+  assert.equal(legacyFirst.get("default"), "grant-default-token");
+
+  const legacySecond = loadCompanies({
+    ECONOMIC_GRANT_DEFAULT: "grant-default-token",
+    ECONOMIC_AGREEMENT_GRANT_TOKEN: "legacy-token",
+  });
+  assert.equal(legacySecond.get("default"), "grant-default-token");
+});
+
 test("loadCompanies ignores empty values and invalid suffixes", () => {
   const companies = loadCompanies({
     ECONOMIC_GRANT_: "x",

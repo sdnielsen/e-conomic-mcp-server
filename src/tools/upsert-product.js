@@ -38,6 +38,19 @@ const productSchema = z.object({
     .describe("Department number"),
 });
 
+/**
+ * Builds the API path of one product.
+ *
+ * Args:
+ *   productNumber (string): Product number, URL-encoded because product
+ *     numbers are free text.
+ *
+ * Returns:
+ *   string: Path relative to the API base URL.
+ */
+export const productPath = (productNumber) =>
+  `/products/${encodeURIComponent(productNumber)}`;
+
 const buildProductPayload = (input) => {
   const payload = {
     productNumber: input.productNumber,
@@ -85,7 +98,7 @@ export const registerUpsertProductTool = (server) => {
       try {
         let exists = false;
         try {
-          await request("GET", `/products/${input.productNumber}`, undefined, {
+          await request("GET", productPath(input.productNumber), undefined, {
             company: input.company,
           });
           exists = true;
@@ -105,7 +118,7 @@ export const registerUpsertProductTool = (server) => {
         }
 
         const data = exists
-          ? await request("PUT", `/products/${input.productNumber}`, payload, {
+          ? await request("PUT", productPath(input.productNumber), payload, {
               company: input.company,
             })
           : await request("POST", "/products", payload, {

@@ -11,17 +11,23 @@ const LEGACY_COMPANY_KEY = "default";
  * Each `ECONOMIC_GRANT_<NAME>` variable holds the agreement grant token of one
  * company; the company key is `<NAME>` in lower case. The legacy
  * `ECONOMIC_AGREEMENT_GRANT_TOKEN` variable is exposed as the company
- * "default". Empty values and suffixes outside `[A-Z0-9_]` are ignored.
+ * "default", but only as a fallback: it never overrides a `default` company
+ * already set through `ECONOMIC_GRANT_DEFAULT`, regardless of which variable
+ * appears later in `env`. Empty values and suffixes outside `[A-Z0-9_]` are
+ * ignored.
  *
  * Args:
  *   env (object): Environment variables, usually `process.env`.
  *
  * Returns:
- *   Map<string, string>: Company key mapped to its agreement grant token, in
- *   the order the variables appear in `env`.
+ *   Map<string, string>: Company key mapped to its agreement grant token.
+ *   `ECONOMIC_GRANT_<NAME>` entries appear in the order the variables appear
+ *   in `env`; the legacy variable, when it contributes the `default` key, is
+ *   always added last.
  */
 export const loadCompanies = (env) => {
   const companies = new Map();
+  let legacyGrantToken;
 
   for (const [name, rawValue] of Object.entries(env)) {
     const value = typeof rawValue === "string" ? rawValue.trim() : "";
@@ -30,7 +36,7 @@ export const loadCompanies = (env) => {
     }
 
     if (name === LEGACY_GRANT_VARIABLE) {
-      companies.set(LEGACY_COMPANY_KEY, value);
+      legacyGrantToken = value;
       continue;
     }
 
@@ -40,6 +46,10 @@ export const loadCompanies = (env) => {
         companies.set(suffix.toLowerCase(), value);
       }
     }
+  }
+
+  if (legacyGrantToken !== undefined && !companies.has(LEGACY_COMPANY_KEY)) {
+    companies.set(LEGACY_COMPANY_KEY, legacyGrantToken);
   }
 
   return companies;

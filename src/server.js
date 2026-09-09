@@ -1,14 +1,20 @@
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import pkg from "../package.json" with { type: "json" };
 import registerTools from "./tools/index.js";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json");
 
 // Load a .env placed next to package.json, never one from the working
 // directory, so the server behaves the same wherever a client starts it.
+// ECONOMIC_ENV_FILE overrides the location; tests point it at a missing file.
 dotenv.config({
-  path: fileURLToPath(new URL("../.env", import.meta.url)),
+  path:
+    process.env.ECONOMIC_ENV_FILE ??
+    fileURLToPath(new URL("../.env", import.meta.url)),
   quiet: true,
 });
 

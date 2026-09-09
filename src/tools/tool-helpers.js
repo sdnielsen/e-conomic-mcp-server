@@ -46,6 +46,11 @@ export const dateSchema = z
   .string()
   .regex(DATE_PATTERN, "Must be formatted as YYYY-MM-DD");
 
+export const accountingYearSchema = z
+  .string()
+  .regex(/^\d{4}(\/\d{4})?$/, "Must be a year like 2025 or 2025/2026")
+  .describe("Accounting year identifier, for example 2025 or 2025/2026.");
+
 /**
  * Wraps a JSON-serialisable value as MCP text content.
  *

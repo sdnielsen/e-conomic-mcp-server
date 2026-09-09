@@ -23,6 +23,13 @@ test("buildEntriesFilter appends amount match when provided", () => {
   );
 });
 
+test("buildEntriesFilter appends amount match when amount is zero", () => {
+  assert.match(
+    buildEntriesFilter({ fromDate: "2025-05-01", toDate: "2025-05-31", amount: 0 }),
+    /\$and:amountInBaseCurrency\$eq:0$/
+  );
+});
+
 test("buildEntriesFilter ignores a null amount", () => {
   assert.equal(
     buildEntriesFilter({ fromDate: "2025-05-01", toDate: "2025-05-31", amount: null }),

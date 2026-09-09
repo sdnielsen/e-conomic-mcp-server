@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { EconomicApiError } from "../../src/economic/errors.js";
 import {
+  accountingYearSchema,
   buildListQuery,
   dateRangeClauses,
   errorToContent,
@@ -74,4 +75,14 @@ test("errorToContent flags the result as an error and logs the details", async (
 
 test("errorToContent rethrows anything that is not an EconomicApiError", () => {
   assert.throws(() => errorToContent(new TypeError("nope")), TypeError);
+});
+
+test("accountingYearSchema accepts a plain year and a split year", () => {
+  assert.equal(accountingYearSchema.parse("2025"), "2025");
+  assert.equal(accountingYearSchema.parse("2025/2026"), "2025/2026");
+});
+
+test("accountingYearSchema rejects a path-like value and a short year", () => {
+  assert.throws(() => accountingYearSchema.parse("../foo"));
+  assert.throws(() => accountingYearSchema.parse("25"));
 });

@@ -18,7 +18,7 @@ const current = {
   vatAmount: 25,
   roundingAmount: 0,
   dueDate: "2026-01-24",
-  paymentTerms: { paymentTermsNumber: 1, self: "pt" },
+  paymentTerms: { paymentTermsNumber: 1, self: "pt", paymentTermsType: "net" },
   customer: { customerNumber: 1, self: "c" },
   recipient: { name: "Decathlon", address: "Avenue 5", vatZone: { vatZoneNumber: 1 } },
   deliveryLocation: { deliveryLocationNumber: 1 },
@@ -62,7 +62,24 @@ test("buildDraftUpdatePayload keeps notes, references, delivery and project when
   assert.deepEqual(payload.delivery, current.delivery);
   assert.deepEqual(payload.project, current.project);
   assert.deepEqual(payload.lines, current.lines);
+  assert.equal("dueDate" in payload, false);
+});
+
+test("buildDraftUpdatePayload keeps the current dueDate when payment terms are of type dueDate", () => {
+  const dueDateTerms = {
+    ...current,
+    paymentTerms: { ...current.paymentTerms, paymentTermsType: "dueDate" },
+  };
+
+  const payload = buildDraftUpdatePayload(dueDateTerms, { draftInvoiceNumber: 55 });
+
   assert.equal(payload.dueDate, "2026-01-24");
+});
+
+test("buildDraftUpdatePayload sends the input dueDate with net payment terms", () => {
+  const payload = buildDraftUpdatePayload(current, { draftInvoiceNumber: 55, dueDate: "2026-02-15" });
+
+  assert.equal(payload.dueDate, "2026-02-15");
 });
 
 test("buildDraftUpdatePayload drops computed and read-only fields", () => {

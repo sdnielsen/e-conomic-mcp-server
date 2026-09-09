@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { request } from "../economic/api-client.js";
 import {
+  accountingYearSchema,
   buildListQuery,
   companySchema,
   errorToContent,
@@ -36,11 +37,7 @@ export const registerListAccountTotalsTool = (server) => {
         "List the booked total per account for an accounting year, or for one period of it. Use it to reconcile VAT account balances against sales and purchase accounts.",
       inputSchema: z.object({
         company: companySchema,
-        accountingYear: z
-          .string()
-          .min(4)
-          .max(9)
-          .describe("Accounting year identifier, for example 2025 or 2025/2026."),
+        accountingYear: accountingYearSchema,
         periodNumber: z
           .number()
           .int()

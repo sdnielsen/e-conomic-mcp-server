@@ -32,6 +32,7 @@ const connect = async (entryPoint) => {
       PATH: process.env.PATH,
       ECONOMIC_APP_SECRET_TOKEN: "demo",
       ECONOMIC_GRANT_DEMO: "demo",
+      ECONOMIC_ENV_FILE: "/nonexistent/.env",
     },
     stderr: "pipe",
   });
@@ -60,6 +61,7 @@ for (const entryPoint of ENTRY_POINTS) {
       const companies = await client.callTool({ name: "list_companies", arguments: {} });
       assert.notEqual(companies.isError, true);
       const body = JSON.parse(companies.content[0].text);
+      assert.equal(body.length, 1, "a leaked real company must never pass silently");
       assert.equal(body[0].company, "demo");
       assert.equal(body[0].companyName, "Demo Company");
 
